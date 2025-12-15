@@ -121,7 +121,7 @@
       "name": "Create LinkedIn Post",
       "credentials": {
         "linkedInOAuth2Api": {
-          "name": "REPLACE_IN_N8N"ss
+          "name": "REPLACE_IN_N8N"
         }
       }
     }
