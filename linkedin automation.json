@@ -1,0 +1,134 @@
+{
+  "name": "linkedin automation",
+  "nodes": [
+    {
+      "parameters": {
+        "pollTimes": {
+          "item": [{ "hour": 10 }]
+        },
+        "authentication": "airtableTokenApi",
+        "baseId": {
+          "__rl": true,
+          "value": "AIRTABLE_BASE_ID",
+          "mode": "id"
+        },
+        "tableId": {
+          "__rl": true,
+          "value": "AIRTABLE_TABLE_ID",
+          "mode": "id"
+        },
+        "triggerField": "Status",
+        "additionalFields": {
+          "formula": "IF({Status}=\"Ready\",TRUE(),FALSE())"
+        }
+      },
+      "type": "n8n-nodes-base.airtableTrigger",
+      "typeVersion": 1,
+      "position": [-544, 0],
+      "name": "Airtable Trigger",
+      "credentials": {
+        "airtableTokenApi": {
+          "name": "REPLACE_IN_N8N"
+        }
+      }
+    },
+
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=Generate a clear and engaging LinkedIn post for the topic below.\n\nTopic:{{ $json.fields.Topic }}\n\nInstructions:\n- Write in a professional, conversational tone.\n- Exactly 3 sentences.\n- Start with a strong hook.\n- End with a CTA.\n- No emojis.\n\nOutput:\nTitle + paragraph"
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3,
+      "position": [-336, 0],
+      "name": "LinkedIN BlogMaker"
+    },
+
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "value": "gpt-4o",
+          "mode": "list"
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1,
+      "position": [-48, 352],
+      "name": "OpenAI Chat Model",
+      "credentials": {
+        "openAiApi": {
+          "name": "REPLACE_IN_N8N"
+        }
+      }
+    },
+
+    {
+      "parameters": {
+        "operation": "sendAndWait",
+        "sendTo": "YOUR_EMAIL@gmail.com",
+        "subject": "Approval required",
+        "message": "={{ $json.output }}",
+        "responseType": "freeText"
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2,
+      "position": [16, 0],
+      "name": "Send approval email",
+      "credentials": {
+        "gmailOAuth2": {
+          "name": "REPLACE_IN_N8N"
+        }
+      }
+    },
+
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.replicate.com/v1/predictions",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "Bearer REPLACE_IN_N8N"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "rawContentType": "json",
+        "body": "{ \"version\": \"MODEL_VERSION\", \"input\": { \"prompt\": \"AI automation illustration\", \"aspect_ratio\": \"1:1\" } }"
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4,
+      "position": [800, -16],
+      "name": "Generate Image"
+    },
+
+    {
+      "parameters": {
+        "person": "LINKEDIN_PERSON_ID",
+        "text": "={{ $('Airtable Trigger').item.json.fields.Text }}",
+        "shareMediaCategory": "IMAGE"
+      },
+      "type": "n8n-nodes-base.linkedIn",
+      "typeVersion": 1,
+      "position": [2272, -32],
+      "name": "Create LinkedIn Post",
+      "credentials": {
+        "linkedInOAuth2Api": {
+          "name": "REPLACE_IN_N8N"ss
+        }
+      }
+    }
+  ],
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "tags": []
+}
